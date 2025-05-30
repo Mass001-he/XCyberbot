@@ -2,6 +2,7 @@
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  --content-height: 1200px;
 }
 
 body,
@@ -21,4 +22,8 @@ p {
 
 li {
   list-style: none;
+}
+
+* {
+  box-sizing: border-box;
 }

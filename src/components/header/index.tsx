@@ -7,7 +7,7 @@ export default function Header() {
   return (
     <div className={styles.headerContainer}>
       <div className={styles.header}>
-        <div>logo</div>
+        <div className={styles.logo}></div>
         <nav>
           <ul className={styles.navList}>
             {routes[0].children.map((route) => (
