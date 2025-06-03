@@ -1,16 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./index.module.less";
 import Draggable from "react-draggable";
+import ReactMarkdown from "react-markdown";
+
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
 
 export default function Robot() {
   const divRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([
-    { from: "bot", text: "你好，我是DeepSeek机器人，有什么可以帮您？" },
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      role: "assistant",
+      content: "你好，我是DeepSeek机器人，有什么可以帮您？",
+    },
   ]);
   const [loading, setLoading] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Message[]>([]);
 
   useEffect(() => {
     if (chatRef.current) {
@@ -20,17 +30,26 @@ export default function Robot() {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-    const userMsg = { from: "user", text: input };
+    const userMsg: Message = { role: "user", content: input };
+    messageRefs.current = [...messageRefs.current, userMsg];
     setMessages((msgs) => [...msgs, userMsg]);
     setInput("");
     setLoading(true);
-    setTimeout(() => {
-      setMessages((msgs) => [
-        ...msgs,
-        { from: "bot", text: "（这里对接DeepSeek回复）" },
-      ]);
-      setLoading(false);
-    }, 1000);
+
+    // 这里对接DeepSeek API
+    const { message } = await fetch("/api/deepseek/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: messageRefs.current,
+      }),
+    }).then((res) => res.json());
+
+    messageRefs.current = [...messageRefs.current, message];
+    setMessages((msgs) => [...msgs, message]);
+    setLoading(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -75,17 +94,21 @@ export default function Robot() {
                 <div
                   key={i}
                   className={`${styles.messageWrapper} ${
-                    msg.from === "user"
+                    msg.role === "user"
                       ? styles.userMsgWrapper
                       : styles.botMsgWrapper
                   }`}
                 >
                   <div
                     className={
-                      msg.from === "user" ? styles.userMsg : styles.botMsg
+                      msg.role === "user" ? styles.userMsg : styles.botMsg
                     }
                   >
-                    {msg.text}
+                    {msg.role === "user" ? (
+                      msg.content
+                    ) : (
+                      <ReactMarkdown children={msg.content}></ReactMarkdown>
+                    )}
                   </div>
                 </div>
               ))}
